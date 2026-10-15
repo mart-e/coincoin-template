@@ -1,0 +1,46 @@
+name: CoinCoin
+run-name: Building latest websie
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "links/**"
+      - "config.ini"
+  workflow_dispatch:
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v7
+    - name: fetch
+      run: wget "https://codeberg.org/mart-e/coincoin/releases/download/latest/coincoin.tar.gz"
+    - name: extract
+      run: tar xzvf coincoin.tar.gz
+    - name: build
+      run: ./coincoin rebuild all
+    - uses: actions/upload-pages-artifact@v3
+      with:
+        path: out/
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
